@@ -6,10 +6,12 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, Tuple
 
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import yfinance as yf
+from scipy import interpolate
 
 
 class StockChartGenerator:
@@ -100,12 +102,27 @@ class StockChartGenerator:
         y_min_global = data['close'].min()
 
         for seg_x, seg_closes in segment_indices:
-            ax.plot(seg_x, seg_closes, linewidth=1.5, color='#2C3E50',
-                    linestyle='-', solid_capstyle='round', solid_joinstyle='round',
-                    zorder=3)
+            if len(seg_x) < 4:
+                ax.plot(seg_x, seg_closes, linewidth=1.5, color='#2C3E50',
+                        linestyle='-', solid_capstyle='round', solid_joinstyle='round',
+                        zorder=3)
+                ax.fill_between(seg_x, seg_closes, y_min_global,
+                               alpha=0.15, color='#2C3E50', zorder=2)
+            else:
+                seg_x_array = np.array(seg_x)
+                seg_closes_array = np.array(seg_closes)
 
-            ax.fill_between(seg_x, seg_closes, y_min_global,
-                           alpha=0.15, color='#2C3E50', zorder=2)
+                cs = interpolate.CubicSpline(seg_x_array, seg_closes_array, bc_type='natural')
+
+                x_smooth = np.linspace(seg_x_array[0], seg_x_array[-1], len(seg_x) * 5)
+                y_smooth = cs(x_smooth)
+
+                ax.plot(x_smooth, y_smooth, linewidth=1.5, color='#2C3E50',
+                        linestyle='-', solid_capstyle='round', solid_joinstyle='round',
+                        zorder=3)
+
+                ax.fill_between(x_smooth, y_smooth, y_min_global,
+                               alpha=0.15, color='#2C3E50', zorder=2)
 
         day_boundaries = []
         day_labels = []

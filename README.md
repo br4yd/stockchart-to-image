@@ -8,10 +8,12 @@ A professional Python tool for generating publication-quality stock price charts
 - Generates clean, minimalistic charts optimized for print media
 - Produces 300 DPI PNG files suitable for professional publication
 - Displays smooth 5-minute interval data over the last 5 trading days
+- Smooth flowing curves using cubic spline interpolation (no angular lines)
 - Shows intraday volatility with detailed price movements
 - Compressed x-axis eliminates empty whitespace during market closures
 - Visual day boundaries with subtle vertical separator lines
 - Intelligently handles market closure gaps (no diagonal lines, no empty space)
+- Filled area charts with professional styling
 - Handles invalid tickers with alternative identifier prompts (ISIN/WKN)
 - Automatic timestamp-based file naming
 - Robust error handling and validation
@@ -73,11 +75,13 @@ print(f"Chart saved to: {filepath}")
 - **Resolution**: 300 DPI (print quality)
 - **Format**: PNG with white background
 - **Size**: 10x6 inches (3000x1800 pixels)
-- **Style**: Filled area chart with continuous line and subtle shading
+- **Style**: Smooth filled area chart with cubic spline interpolation
+- **Interpolation**: Cubic spline with 5x point density for flowing curves
 - **Line Width**: 1.5px with round joins for smooth appearance
 - **Fill**: 15% opacity area underneath line for visual weight
 - **Color Scheme**: Professional grayscale (#2C3E50)
 - **Data Interval**: 5-minute intervals over 5 trading days (~390 data points)
+- **Rendered Points**: ~1,950 interpolated points for ultra-smooth curves
 - **X-Axis**: Compressed numerical axis (no whitespace during market closures)
 - **Gap Handling**: Automatic detection of market closures, no lines or empty space
 - **Day Boundaries**: Subtle vertical dashed lines separating trading days
@@ -112,6 +116,8 @@ Yahoo Finance via yfinance library - 5-minute interval data with gap detection
 - `pandas` - Data manipulation and analysis
 - `matplotlib` - Chart generation and rendering
 - `yfinance` - Yahoo Finance data retrieval
+- `scipy` - Cubic spline interpolation for smooth curves
+- `numpy` - Numerical array operations
 
 ### Performance
 - Average execution time: 3-5 seconds per chart
