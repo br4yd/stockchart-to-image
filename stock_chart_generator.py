@@ -97,9 +97,15 @@ class StockChartGenerator:
         if current_segment_x:
             segment_indices.append((current_segment_x, current_segment_closes))
 
+        y_min_global = data['close'].min()
+
         for seg_x, seg_closes in segment_indices:
-            ax.plot(seg_x, seg_closes, linewidth=1.2, color='#2C3E50',
-                    linestyle='-', alpha=0.9)
+            ax.plot(seg_x, seg_closes, linewidth=1.5, color='#2C3E50',
+                    linestyle='-', solid_capstyle='round', solid_joinstyle='round',
+                    zorder=3)
+
+            ax.fill_between(seg_x, seg_closes, y_min_global,
+                           alpha=0.15, color='#2C3E50', zorder=2)
 
         day_boundaries = []
         day_labels = []

@@ -73,7 +73,9 @@ print(f"Chart saved to: {filepath}")
 - **Resolution**: 300 DPI (print quality)
 - **Format**: PNG with white background
 - **Size**: 10x6 inches (3000x1800 pixels)
-- **Style**: Smooth continuous line chart with segment breaks at market closures
+- **Style**: Filled area chart with continuous line and subtle shading
+- **Line Width**: 1.5px with round joins for smooth appearance
+- **Fill**: 15% opacity area underneath line for visual weight
 - **Color Scheme**: Professional grayscale (#2C3E50)
 - **Data Interval**: 5-minute intervals over 5 trading days (~390 data points)
 - **X-Axis**: Compressed numerical axis (no whitespace during market closures)
