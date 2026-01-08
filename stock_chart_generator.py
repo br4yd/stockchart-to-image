@@ -189,8 +189,86 @@ class StockChartGenerator:
 
         ax.tick_params(axis='both', which='major', labelsize=10)
 
+        # Remove top Y-axis labels that might overlap with header bar
+        yticks = ax.get_yticks()
+        y_labels = ax.get_yticklabels()
+        # Hide the topmost label if it's in the upper 15% of the plot
+        for i, (tick, label) in enumerate(zip(yticks, y_labels)):
+            if tick > y_min + y_range * 0.85:
+                label.set_visible(False)
+
         # Adjust layout to leave space for header bar at top
-        plt.subplots_adjust(top=0.90, bottom=0.12, left=0.08, right=0.98)
+        plt.subplots_adjust(top=0.90, bottom=0.12, left=0.08, right=0.95)
+
+        # Add current price indicator circle with collision detection
+        current_price = closes[-1]
+
+        # Get previous day's closing price for comparison
+        prev_day_close = None
+        if len(data) > 1:
+            # Find the last data point of the previous day
+            last_date = data['date_pd'].iloc[-1].date()
+            prev_day_data = data[data['date_pd'].dt.date < last_date]
+            if len(prev_day_data) > 0:
+                prev_day_close = prev_day_data['close'].iloc[-1]
+
+        if prev_day_close is not None:
+            price_increased = current_price >= prev_day_close
+            circle_color = '#00CC00' if price_increased else '#FF8C00'  # Green or orange
+
+            # Find free space on the right side
+            # Check if more space above or below the line at the right edge
+            y_at_right = closes[-1]
+            space_above = y_max + y_range * 0.1 - y_at_right
+            space_below = y_at_right - (y_min - y_range * 0.1)
+
+            # Position circle in the larger space
+            if space_above > space_below:
+                # Place above the line
+                circle_y = y_at_right + space_above * 0.5
+            else:
+                # Place below the line
+                circle_y = y_at_right - space_below * 0.5
+
+            # Circle position (in data coordinates)
+            circle_x = len(data) - 15  # 15 units from the right edge
+
+            # Draw circle
+            from matplotlib.patches import Circle
+            circle_radius_x = 12  # x-axis units
+            circle_radius_y = y_range * 0.08  # 8% of y-range
+
+            circle = Circle((circle_x, circle_y), radius=circle_radius_y,
+                          facecolor=circle_color, edgecolor='white',
+                          linewidth=1.5, zorder=15, transform=ax.transData)
+            ax.add_patch(circle)
+
+            # Add text elements inside circle
+            current_date = data['date_pd'].iloc[-1].strftime('%d %b')
+            arrow = '▲' if price_increased else '▼'
+
+            if price_increased:
+                # Arrow above, date below
+                ax.text(circle_x, circle_y + circle_radius_y * 0.35, arrow,
+                       ha='center', va='center', fontsize=10,
+                       color='#FFFF00', fontweight='bold', zorder=16)
+                ax.text(circle_x, circle_y, f'{current_price:.2f}',
+                       ha='center', va='center', fontsize=9,
+                       color='white', fontweight='bold', zorder=16)
+                ax.text(circle_x, circle_y - circle_radius_y * 0.35, current_date,
+                       ha='center', va='center', fontsize=7,
+                       color='#FFFF00', fontweight='bold', zorder=16)
+            else:
+                # Date above, arrow below
+                ax.text(circle_x, circle_y + circle_radius_y * 0.35, current_date,
+                       ha='center', va='center', fontsize=7,
+                       color='#FFFF00', fontweight='bold', zorder=16)
+                ax.text(circle_x, circle_y, f'{current_price:.2f}',
+                       ha='center', va='center', fontsize=9,
+                       color='white', fontweight='bold', zorder=16)
+                ax.text(circle_x, circle_y - circle_radius_y * 0.35, arrow,
+                       ha='center', va='center', fontsize=10,
+                       color='#FFFF00', fontweight='bold', zorder=16)
 
         return fig
 
