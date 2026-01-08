@@ -36,7 +36,6 @@ class StockChartGenerator:
         """
         try:
             stock = yf.Ticker(ticker)
-
             hist = stock.history(period='5d', interval='5m')
 
             if hist.empty:
@@ -73,7 +72,6 @@ class StockChartGenerator:
         Returns:
             Matplotlib figure object
         """
-        # Exact dimensions: 105.6mm x 44.45mm at 300 DPI = 1247px x 525px
         width_mm = 105.6
         height_mm = 44.45
         width_inch = width_mm / 25.4
@@ -81,7 +79,6 @@ class StockChartGenerator:
 
         fig, ax = plt.subplots(figsize=(width_inch, height_inch), dpi=300)
 
-        # Transparent background
         fig.patch.set_alpha(0.0)
         ax.patch.set_alpha(0.0)
 
@@ -98,12 +95,10 @@ class StockChartGenerator:
             x_smooth = np.linspace(x_indices[0], x_indices[-1], len(x_indices) * 5)
             y_smooth = cs(x_smooth)
 
-            # Red price line (slightly thinner)
             ax.plot(x_smooth, y_smooth, linewidth=2.0, color='#FF0000',
                     linestyle='-', solid_capstyle='round', solid_joinstyle='round',
                     zorder=3)
         else:
-            # Red price line (slightly thinner)
             ax.plot(x_indices, closes, linewidth=2.0, color='#FF0000',
                     linestyle='-', solid_capstyle='round', solid_joinstyle='round',
                     zorder=3)
@@ -116,7 +111,6 @@ class StockChartGenerator:
             row_date = row['date_pd'].date()
             if row_date != current_date:
                 day_boundaries.append(row['x_index'])
-                # Format as "30 Jan" (day first, then month)
                 day_labels.append(row['date_pd'].strftime('%d %b'))
                 current_date = row_date
 
@@ -128,47 +122,51 @@ class StockChartGenerator:
                 mid_point = (day_boundaries[i] + len(data) - 1) / 2
             label_positions.append(mid_point)
 
-        ax.set_xticks(label_positions)
-        # Bold x-axis labels
-        ax.set_xticklabels(day_labels, fontweight='bold', fontsize=9)
+        filtered_positions = []
+        filtered_labels = []
+        min_distance = 50
 
-        # Remove axis labels
+        for i in range(len(label_positions)):
+            if i == len(label_positions) - 1:
+                filtered_positions.append(label_positions[i])
+                filtered_labels.append(day_labels[i])
+            elif i < len(label_positions) - 1:
+                distance = label_positions[i + 1] - label_positions[i]
+                if distance >= min_distance:
+                    filtered_positions.append(label_positions[i])
+                    filtered_labels.append(day_labels[i])
+
+        ax.set_xticks(filtered_positions)
+        ax.set_xticklabels(filtered_labels, fontweight='bold', fontsize=9)
+
         ax.set_xlabel('')
         ax.set_ylabel('')
 
-        # Thin light-blue vertical gridlines
         ax.grid(True, alpha=0.4, linestyle='-', linewidth=0.5, axis='x', color='#ADD8E6')
         ax.set_axisbelow(True)
 
-        # Full-width dark blue header bar with company name
-        from matplotlib.patches import FancyBboxPatch
+        from matplotlib.patches import Rectangle
 
-        # Add header bar with rounded corners and shadow
-        header_height = 0.08  # 8% of figure height
-
-        # Shadow (slightly offset, semi-transparent)
+        header_height = 0.08
         shadow_offset = 0.002
-        shadow_rect = FancyBboxPatch((shadow_offset, 1 - header_height - shadow_offset),
-                                     1 - shadow_offset, header_height,
-                                     transform=fig.transFigure,
-                                     boxstyle="round,pad=0,rounding_size=0.01",
-                                     facecolor='black',
-                                     edgecolor='none',
-                                     alpha=0.15,
-                                     zorder=9)
+
+        shadow_rect = Rectangle((shadow_offset, 1 - header_height - shadow_offset),
+                                1 - shadow_offset, header_height,
+                                transform=fig.transFigure,
+                                facecolor='black',
+                                edgecolor='none',
+                                alpha=0.15,
+                                zorder=9)
         fig.patches.append(shadow_rect)
 
-        # Main header bar with 5px corner radius
-        header_rect = FancyBboxPatch((0, 1 - header_height), 1, header_height,
-                                     transform=fig.transFigure,
-                                     boxstyle="round,pad=0,rounding_size=0.01",
-                                     facecolor='#2d68b6',
-                                     edgecolor='none',
-                                     zorder=10)
+        header_rect = Rectangle((0, 1 - header_height), 1, header_height,
+                               transform=fig.transFigure,
+                               facecolor='#2d68b6',
+                               edgecolor='none',
+                               zorder=10)
         fig.patches.append(header_rect)
 
-        # Add company name text left-aligned on header bar
-        fig.text(0.03, 1 - header_height / 2, ticker.upper(),
+        fig.text(0.05, 1 - header_height / 2, ticker.upper(),
                 ha='left', va='center',
                 fontsize=8, fontweight='bold',
                 color='white',
@@ -189,24 +187,12 @@ class StockChartGenerator:
 
         ax.tick_params(axis='both', which='major', labelsize=10)
 
-        # Remove top Y-axis labels that might overlap with header bar
-        yticks = ax.get_yticks()
-        y_labels = ax.get_yticklabels()
-        # Hide the topmost label if it's in the upper 15% of the plot
-        for i, (tick, label) in enumerate(zip(yticks, y_labels)):
-            if tick > y_min + y_range * 0.85:
-                label.set_visible(False)
+        plt.subplots_adjust(top=0.85, bottom=0.15, left=0.12, right=0.95)
 
-        # Adjust layout to leave space for header bar at top
-        plt.subplots_adjust(top=0.90, bottom=0.12, left=0.08, right=0.95)
-
-        # Add current price indicator circle with collision detection
         current_price = closes[-1]
 
-        # Get previous day's closing price for comparison
         prev_day_close = None
         if len(data) > 1:
-            # Find the last data point of the previous day
             last_date = data['date_pd'].iloc[-1].date()
             prev_day_data = data[data['date_pd'].dt.date < last_date]
             if len(prev_day_data) > 0:
@@ -214,61 +200,63 @@ class StockChartGenerator:
 
         if prev_day_close is not None:
             price_increased = current_price >= prev_day_close
-            circle_color = '#00CC00' if price_increased else '#FF8C00'  # Green or orange
+            circle_color = '#00CC00' if price_increased else '#FF8C00'
 
-            # Find free space on the right side
-            # Check if more space above or below the line at the right edge
+            closes = data['close'].values
             y_at_right = closes[-1]
-            space_above = y_max + y_range * 0.1 - y_at_right
+            space_above = (y_max + y_range * 0.1) - y_at_right
             space_below = y_at_right - (y_min - y_range * 0.1)
 
-            # Position circle in the larger space
             if space_above > space_below:
-                # Place above the line
-                circle_y = y_at_right + space_above * 0.5
+                circle_y = y_at_right + space_above * 0.6
             else:
-                # Place below the line
-                circle_y = y_at_right - space_below * 0.5
+                circle_y = y_at_right - space_below * 0.6
 
-            # Circle position (in data coordinates)
-            circle_x = len(data) - 15  # 15 units from the right edge
+            circle_x = len(data) - 35
 
-            # Draw circle
-            from matplotlib.patches import Circle
-            circle_radius_x = 12  # x-axis units
-            circle_radius_y = y_range * 0.08  # 8% of y-range
-
-            circle = Circle((circle_x, circle_y), radius=circle_radius_y,
-                          facecolor=circle_color, edgecolor='white',
-                          linewidth=1.5, zorder=15, transform=ax.transData)
-            ax.add_patch(circle)
-
-            # Add text elements inside circle
             current_date = data['date_pd'].iloc[-1].strftime('%d %b')
             arrow = '▲' if price_increased else '▼'
 
+            from matplotlib.patches import Ellipse
+
+            x_range = ax.get_xlim()[1] - ax.get_xlim()[0]
+            y_display_range = ax.get_ylim()[1] - ax.get_ylim()[0]
+
+            fig_width, fig_height = fig.get_size_inches()
+            ax_width = (0.95 - 0.12) * fig_width
+            ax_height = (0.85 - 0.15) * fig_height
+            aspect_ratio = (x_range / y_display_range) * (ax_height / ax_width)
+
+            circle_height = y_range * 0.45
+            circle_width = circle_height * aspect_ratio
+
+            circle = Ellipse((circle_x, circle_y), width=circle_width, height=circle_height,
+                           facecolor=circle_color, edgecolor='white',
+                           linewidth=1.0, zorder=15)
+            ax.add_patch(circle)
+
+            circle_radius = circle_height
+
             if price_increased:
-                # Arrow above, date below
-                ax.text(circle_x, circle_y + circle_radius_y * 0.35, arrow,
-                       ha='center', va='center', fontsize=10,
-                       color='#FFFF00', fontweight='bold', zorder=16)
+                ax.text(circle_x, circle_y + circle_radius * 0.30, arrow,
+                       ha='center', va='center', fontsize=8,
+                       color='#FFFF00', fontweight='bold', zorder=17)
                 ax.text(circle_x, circle_y, f'{current_price:.2f}',
-                       ha='center', va='center', fontsize=9,
-                       color='white', fontweight='bold', zorder=16)
-                ax.text(circle_x, circle_y - circle_radius_y * 0.35, current_date,
-                       ha='center', va='center', fontsize=7,
-                       color='#FFFF00', fontweight='bold', zorder=16)
+                       ha='center', va='center', fontsize=6.5,
+                       color='white', fontweight='bold', zorder=17)
+                ax.text(circle_x, circle_y - circle_radius * 0.25, current_date,
+                       ha='center', va='center', fontsize=5.5,
+                       color='#FFFF00', fontweight='bold', zorder=17)
             else:
-                # Date above, arrow below
-                ax.text(circle_x, circle_y + circle_radius_y * 0.35, current_date,
-                       ha='center', va='center', fontsize=7,
-                       color='#FFFF00', fontweight='bold', zorder=16)
+                ax.text(circle_x, circle_y + circle_radius * 0.25, current_date,
+                       ha='center', va='center', fontsize=5.5,
+                       color='#FFFF00', fontweight='bold', zorder=17)
                 ax.text(circle_x, circle_y, f'{current_price:.2f}',
-                       ha='center', va='center', fontsize=9,
-                       color='white', fontweight='bold', zorder=16)
-                ax.text(circle_x, circle_y - circle_radius_y * 0.35, arrow,
-                       ha='center', va='center', fontsize=10,
-                       color='#FFFF00', fontweight='bold', zorder=16)
+                       ha='center', va='center', fontsize=6.5,
+                       color='white', fontweight='bold', zorder=17)
+                ax.text(circle_x, circle_y - circle_radius * 0.25, arrow,
+                       ha='center', va='center', fontsize=8,
+                       color='#FFFF00', fontweight='bold', zorder=17)
 
         return fig
 
@@ -287,7 +275,7 @@ class StockChartGenerator:
         filename = f"{timestamp}_{ticker.upper()}.png"
         filepath = self.output_dir / filename
 
-        figure.savefig(filepath, dpi=300, bbox_inches='tight',
+        figure.savefig(filepath, dpi=300,
                       facecolor='none', edgecolor='none', transparent=True)
         plt.close(figure)
 
