@@ -141,21 +141,36 @@ class StockChartGenerator:
         ax.set_axisbelow(True)
 
         # Full-width dark blue header bar with company name
-        from matplotlib.patches import Rectangle
+        from matplotlib.patches import FancyBboxPatch
 
-        # Add header bar as a Rectangle that spans full figure width
+        # Add header bar with rounded corners and shadow
         header_height = 0.08  # 8% of figure height
-        header_rect = Rectangle((0, 1 - header_height), 1, header_height,
-                               transform=fig.transFigure,
-                               facecolor='#00008B',
-                               edgecolor='none',
-                               zorder=10)
+
+        # Shadow (slightly offset, semi-transparent)
+        shadow_offset = 0.002
+        shadow_rect = FancyBboxPatch((shadow_offset, 1 - header_height - shadow_offset),
+                                     1 - shadow_offset, header_height,
+                                     transform=fig.transFigure,
+                                     boxstyle="round,pad=0,rounding_size=0.01",
+                                     facecolor='black',
+                                     edgecolor='none',
+                                     alpha=0.15,
+                                     zorder=9)
+        fig.patches.append(shadow_rect)
+
+        # Main header bar with 5px corner radius
+        header_rect = FancyBboxPatch((0, 1 - header_height), 1, header_height,
+                                     transform=fig.transFigure,
+                                     boxstyle="round,pad=0,rounding_size=0.01",
+                                     facecolor='#2d68b6',
+                                     edgecolor='none',
+                                     zorder=10)
         fig.patches.append(header_rect)
 
-        # Add company name text centered on header bar
-        fig.text(0.5, 1 - header_height / 2, ticker.upper(),
-                ha='center', va='center',
-                fontsize=11, fontweight='bold',
+        # Add company name text left-aligned on header bar
+        fig.text(0.03, 1 - header_height / 2, ticker.upper(),
+                ha='left', va='center',
+                fontsize=8, fontweight='bold',
                 color='white',
                 transform=fig.transFigure,
                 zorder=11)
