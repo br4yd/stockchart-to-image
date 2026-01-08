@@ -23,7 +23,7 @@ pip install -r requirements.txt
 source venv/bin/activate
 ```
 
-2. Generate a single stock chart with hourly data:
+2. Generate a stock chart with 5-minute interval data:
 ```bash
 python stock_chart_generator.py TSLA
 ```
@@ -33,7 +33,7 @@ python stock_chart_generator.py TSLA
 deactivate
 ```
 
-The chart will display hourly price changes over 5 trading days and be saved to `graphs/2026-01-08_14-30_TSLA.png`
+The chart will display 5-minute price data over 5 trading days and be saved to `graphs/2026-01-08_14-30_TSLA.png`
 
 ## Common Examples
 
@@ -100,6 +100,16 @@ graphs/
 └── 2026-01-08_14-32_TSLA.png
 ```
 
+## Chart Features
+
+- **Exact dimensions**: 1247x525px (105.6mm x 44.45mm at 300 DPI)
+- **Transparent background** for newspaper layout integration
+- **Blue header bar** with company ticker
+- **Red price line** showing smooth continuous data
+- **Price indicator circle** (green for up, orange for down)
+- **5-minute interval data** over 5 trading days
+- **Continuous smooth line** with cubic spline interpolation
+
 ## Troubleshooting
 
 ### Ticker not found
@@ -112,8 +122,10 @@ Add the appropriate exchange suffix:
 Activate virtual environment first:
 ```bash
 source venv/bin/activate
-pip install pandas matplotlib yfinance
+pip install -r requirements.txt
 ```
+
+This will install: pandas, matplotlib, yfinance, scipy, numpy
 
 ### Permission denied on setup.sh
 Run: `chmod +x setup.sh`

@@ -13,7 +13,13 @@ A professional Python tool for generating publication-quality stock price charts
 - Shows intraday volatility with detailed price movements
 - Compressed x-axis eliminates empty whitespace during market closures
 - No visual disconnections or breaks in the line
-- Filled area charts with professional styling
+- Transparent background for flexible placement in layouts
+- Exact dimensions: 1247px x 525px (105.6mm x 44.45mm at 300 DPI)
+- Blue header bar with company ticker
+- Red price line (2.0px width)
+- Light-blue vertical gridlines
+- Circular price indicator (green for up, orange for down)
+- Smart collision detection for labels and price circle
 - Handles invalid tickers with alternative identifier prompts (ISIN/WKN)
 - Automatic timestamp-based file naming
 - Robust error handling and validation
@@ -25,8 +31,15 @@ A professional Python tool for generating publication-quality stock price charts
 python3 --version
 ```
 
-2. Install required dependencies:
+2. Run the setup script (recommended):
 ```bash
+./setup.sh
+```
+
+Or manually install dependencies:
+```bash
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -35,6 +48,7 @@ pip install -r requirements.txt
 ### Command Line
 
 ```bash
+source venv/bin/activate
 python stock_chart_generator.py <TICKER>
 ```
 
@@ -45,7 +59,7 @@ python stock_chart_generator.py <TICKER>
 python stock_chart_generator.py TSLA
 
 # Generate chart for Lloyd's Banking Group
-python stock_chart_generator.py LLOY
+python stock_chart_generator.py LLOY.L
 
 # Generate chart for Apple
 python stock_chart_generator.py AAPL
@@ -73,20 +87,23 @@ print(f"Chart saved to: {filepath}")
 ## Chart Specifications
 
 - **Resolution**: 300 DPI (print quality)
-- **Format**: PNG with white background
-- **Size**: 10x6 inches (3000x1800 pixels)
-- **Style**: Smooth filled area chart with cubic spline interpolation
+- **Format**: PNG with transparent background
+- **Size**: 105.6mm x 44.45mm (1247px x 525px)
+- **Dimensions**: Exact newspaper column dimensions
+- **Style**: Smooth continuous line with cubic spline interpolation
 - **Interpolation**: Cubic spline with 5x point density for flowing curves
-- **Line Width**: 1.5px with round joins for smooth appearance
-- **Fill**: 15% opacity area underneath line for visual weight
-- **Color Scheme**: Professional grayscale (#2C3E50)
+- **Line Width**: 2.0px red line (#FF0000)
+- **Line Style**: Round caps and joins for smooth appearance
+- **Header Bar**: Dark blue (#2d68b6) with white company ticker
+- **Grid**: Thin light-blue vertical gridlines (#ADD8E6)
 - **Data Interval**: 5-minute intervals over 5 trading days (~390 data points)
 - **Rendered Points**: ~1,950 interpolated points for ultra-smooth curves
 - **X-Axis**: Compressed numerical axis (no whitespace during market closures)
-- **Gap Handling**: Automatic detection of market closures, no lines or empty space
-- **Day Boundaries**: Subtle vertical dashed lines separating trading days
-- **Time Display**: Date labels centered on each trading day
-- **Elements**: Clean title, compressed date axis, price axis, horizontal grid lines
+- **X-Axis Labels**: Date format "30 Jan", "31 Jan" etc. (bold)
+- **Gap Handling**: Continuous line with smooth interpolation across non-trading periods
+- **Price Indicator**: Circular badge with current price, date, and trend arrow
+- **Indicator Colors**: Green (#00CC00) for up, Orange (#FF8C00) for down
+- **Smart Positioning**: Automatic collision detection for optimal placement
 
 ## Error Handling
 
@@ -110,7 +127,7 @@ If fewer than 5 trading days are available (e.g., newly listed stocks), the tool
 ## Technical Details
 
 ### Data Source
-Yahoo Finance via yfinance library - 5-minute interval data with gap detection
+Yahoo Finance via yfinance library - 5-minute interval data
 
 ### Dependencies
 - `pandas` - Data manipulation and analysis
@@ -122,17 +139,23 @@ Yahoo Finance via yfinance library - 5-minute interval data with gap detection
 ### Performance
 - Average execution time: 3-5 seconds per chart
 - Memory efficient handling of intraday time-series data
-- Optimized vectorized operations with segment-based plotting
-- Automatic gap detection prevents lines across market closures
+- Optimized vectorized operations
 - Fetches last 5 trading days directly via period parameter
 
 ## File Structure
 
 ```
-stocks-to-graph/
+stockchart-to-image/
 ├── stock_chart_generator.py    # Main application
 ├── requirements.txt             # Python dependencies
+├── setup.sh                     # Setup script
 ├── README.md                    # Documentation
+├── QUICKSTART.md                # Quick start guide
+├── LICENSE                      # MIT License
+├── check_install.py             # Installation checker
+├── diagnose_data.py             # Data diagnostics tool
+├── example_batch.py             # Batch processing example
+├── test_generator.py            # Test suite
 └── graphs/                      # Output directory (auto-created)
     └── YYYY-MM-DD_HH-mm_TICKER.png
 ```
@@ -169,4 +192,4 @@ The tool generates 300 DPI images. Ensure your viewer is not downscaling the ima
 
 ## License
 
-This tool is provided as-is for newspaper and publication workflows.
+MIT License - See LICENSE file for details
