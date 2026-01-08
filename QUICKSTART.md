@@ -23,7 +23,7 @@ pip install -r requirements.txt
 source venv/bin/activate
 ```
 
-2. Generate a single stock chart:
+2. Generate a single stock chart with hourly data:
 ```bash
 python stock_chart_generator.py TSLA
 ```
@@ -33,7 +33,7 @@ python stock_chart_generator.py TSLA
 deactivate
 ```
 
-The chart will be saved to `graphs/2026-01-08_14-30_TSLA.png`
+The chart will display hourly price changes over 5 trading days and be saved to `graphs/2026-01-08_14-30_TSLA.png`
 
 ## Common Examples
 
@@ -112,7 +112,7 @@ Add the appropriate exchange suffix:
 Activate virtual environment first:
 ```bash
 source venv/bin/activate
-pip install pandas matplotlib
+pip install pandas matplotlib yfinance
 ```
 
 ### Permission denied on setup.sh

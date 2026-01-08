@@ -4,10 +4,11 @@ A professional Python tool for generating publication-quality stock price charts
 
 ## Features
 
-- Fetches real-time stock data from Yahoo Finance public API (no API key required)
+- Fetches real-time hourly stock data from Yahoo Finance using yfinance library
 - Generates clean, minimalistic charts optimized for print media
 - Produces 300 DPI PNG files suitable for professional publication
-- Displays exactly 5 trading days of market data
+- Displays hourly price changes over the last 5 trading days
+- Shows intraday volatility with detailed time-based data points
 - Handles invalid tickers with alternative identifier prompts (ISIN/WKN)
 - Automatic timestamp-based file naming
 - Robust error handling and validation
@@ -69,10 +70,11 @@ print(f"Chart saved to: {filepath}")
 - **Resolution**: 300 DPI (print quality)
 - **Format**: PNG with white background
 - **Size**: 10x6 inches (3000x1800 pixels)
-- **Style**: Minimalistic line chart with markers
+- **Style**: Continuous line chart showing hourly data
 - **Color Scheme**: Professional grayscale (#2C3E50)
-- **Data Points**: Exactly 5 trading days
-- **Elements**: Title, date axis, price axis, grid lines
+- **Data Interval**: Hourly prices over 5 trading days
+- **Time Display**: Major ticks show dates, minor ticks show 6-hour intervals
+- **Elements**: Title with hourly notation, date/time axis, price axis, dual-level grid lines
 
 ## Error Handling
 
@@ -96,16 +98,18 @@ If fewer than 5 trading days are available (e.g., newly listed stocks), the tool
 ## Technical Details
 
 ### Data Source
-Yahoo Finance Query API v8 - Public endpoint requiring no authentication
+Yahoo Finance via yfinance library - Hourly interval data with 1h granularity
 
 ### Dependencies
 - `pandas` - Data manipulation and analysis
 - `matplotlib` - Chart generation and rendering
+- `yfinance` - Yahoo Finance data retrieval
 
 ### Performance
-- Average execution time: 2-3 seconds per chart
-- Memory efficient handling of time-series data
+- Average execution time: 2-4 seconds per chart
+- Memory efficient handling of hourly time-series data
 - Optimized vectorized operations
+- Fetches 10 days of data to ensure 5 complete trading days
 
 ## File Structure
 

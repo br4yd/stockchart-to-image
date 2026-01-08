@@ -22,44 +22,58 @@ class StockChartGenerator:
 
     def fetch_stock_data(self, ticker: str, days: int = 5) -> Optional[pd.DataFrame]:
         """
-        Fetch stock data from Yahoo Finance using yfinance library.
+        Fetch hourly stock data from Yahoo Finance using yfinance library.
 
         Args:
             ticker: Stock ticker symbol
             days: Number of trading days to fetch (default 5)
 
         Returns:
-            DataFrame with stock data or None if fetch fails
+            DataFrame with hourly stock data or None if fetch fails
         """
         try:
             stock = yf.Ticker(ticker)
 
             end_date = datetime.now()
-            start_date = end_date - timedelta(days=14)
+            start_date = end_date - timedelta(days=10)
 
-            hist = stock.history(start=start_date, end=end_date, interval='1d')
+            hist = stock.history(start=start_date, end=end_date, interval='1h')
 
             if hist.empty:
                 return None
 
             hist = hist.reset_index()
-            hist.columns = [col.lower() for col in hist.columns]
 
-            hist = hist.rename(columns={'date': 'date'})
+            if 'Datetime' in hist.columns:
+                hist = hist.rename(columns={'Datetime': 'date'})
+            elif 'Date' in hist.columns:
+                hist = hist.rename(columns={'Date': 'date'})
+
+            hist.columns = [col.lower() for col in hist.columns]
             hist = hist.dropna(subset=['close'])
             hist = hist.sort_values('date')
 
-            return hist.tail(days)
+            if len(hist) == 0:
+                return None
+
+            unique_days = hist['date'].dt.date.nunique()
+            if unique_days < days:
+                return hist
+
+            cutoff_date = hist['date'].dt.date.unique()[-days]
+            hist = hist[hist['date'].dt.date >= cutoff_date]
+
+            return hist
 
         except Exception as e:
             return None
 
     def generate_chart(self, data: pd.DataFrame, ticker: str) -> plt.Figure:
         """
-        Generate a print-quality stock chart.
+        Generate a print-quality stock chart with hourly data.
 
         Args:
-            data: DataFrame containing stock data
+            data: DataFrame containing hourly stock data
             ticker: Stock ticker symbol
 
         Returns:
@@ -70,20 +84,28 @@ class StockChartGenerator:
         dates = data['date'].values
         closes = data['close'].values
 
-        ax.plot(dates, closes, linewidth=2, color='#2C3E50', marker='o',
-                markersize=4, markerfacecolor='#2C3E50', markeredgewidth=0)
+        ax.plot(dates, closes, linewidth=1.5, color='#2C3E50',
+                marker='', linestyle='-', alpha=0.9)
 
-        ax.set_xlabel('Date', fontsize=12, fontweight='bold')
+        ax.set_xlabel('Date & Time', fontsize=12, fontweight='bold')
         ax.set_ylabel('Price (USD)', fontsize=12, fontweight='bold')
-        ax.set_title(f'{ticker.upper()} - Last 5 Trading Days',
+
+        num_days = data['date'].dt.date.nunique()
+        ax.set_title(f'{ticker.upper()} - Last {num_days} Trading Days (Hourly)',
                      fontsize=14, fontweight='bold', pad=20)
 
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
         ax.xaxis.set_major_locator(mdates.DayLocator())
 
-        fig.autofmt_xdate(rotation=0, ha='center')
+        ax.xaxis.set_minor_formatter(mdates.DateFormatter('%H:%M'))
+        ax.xaxis.set_minor_locator(mdates.HourLocator(interval=6))
 
-        ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
+        ax.tick_params(axis='x', which='minor', labelsize=8, rotation=45)
+
+        fig.autofmt_xdate(rotation=45, ha='right')
+
+        ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5, which='major')
+        ax.grid(True, alpha=0.15, linestyle=':', linewidth=0.3, which='minor')
         ax.set_axisbelow(True)
 
         ax.spines['top'].set_visible(False)
@@ -190,10 +212,13 @@ class StockChartGenerator:
             if data is None or len(data) == 0:
                 raise ValueError(f"Unable to fetch data for the provided identifier")
 
-        if len(data) < 5:
-            print(f"Warning: Only {len(data)} trading days available (requested 5)")
+        num_days = data['date'].dt.date.nunique()
+        num_hours = len(data)
 
-        print(f"Generating chart with {len(data)} trading days...")
+        if num_days < 5:
+            print(f"Warning: Only {num_days} trading days available (requested 5)")
+
+        print(f"Generating chart with {num_hours} hourly data points across {num_days} trading days...")
 
         fig = self.generate_chart(data, ticker)
         filepath = self.save_chart(fig, ticker)
