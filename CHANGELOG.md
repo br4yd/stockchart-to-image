@@ -1,6 +1,55 @@
 # Changelog
 
-## Version 2.0 - Hourly Data Implementation
+## Version 2.1 - Gap Fix and 5-Minute Intervals (CRITICAL FIX)
+
+### Problem Fixed
+The hourly implementation (v2.0) had a critical visualization issue where charts displayed huge diagonal lines across market closures (overnight, weekends). This made charts unprofessional and unsuitable for publication.
+
+### Solution
+- **Changed interval from 1h to 5m**: Now uses 5-minute intervals for smooth visualization
+- **Implemented gap detection**: Automatically detects market closures and breaks the line
+- **Segment-based plotting**: Plots separate line segments for each trading session
+- **Matches industry standards**: Charts now resemble typical 5-day charts on financial websites
+
+### Technical Changes
+
+#### Data Fetching
+- **Changed to 5-minute intervals**: `interval='5m'` instead of `interval='1h'`
+- **Simplified period specification**: Uses `period='5d'` directly
+- **Increased data points**: ~390 points (78 per day) vs. ~30-40 hourly points
+- **Better intraday detail**: Shows smooth price movements throughout trading hours
+
+#### Gap Handling
+- **Gap detection algorithm**: Identifies time gaps larger than 2 hours
+- **Segment creation**: Breaks data into segments at each gap
+- **Individual segment plotting**: Each trading session rendered separately
+- **Visual result**: Clean breaks between trading days, no diagonal lines
+
+#### Chart Appearance
+- **Simplified axis**: Removed minor time ticks (not needed with smooth data)
+- **Cleaner labels**: Date-only x-axis labels, no rotation needed
+- **Thinner lines**: Reduced to 1.2px width for clarity with more data points
+- **Professional look**: Matches standard financial website 5-day chart appearance
+
+### Benefits
+1. Professional appearance suitable for newspaper publication
+2. Smooth continuous lines during market hours
+3. Clean visual breaks at market closures
+4. Matches industry standard chart appearance
+5. Better representation of intraday volatility
+
+### Files Modified
+- `stock_chart_generator.py`: Updated fetch_stock_data() and generate_chart()
+- `README.md`: Updated feature list and specifications
+- `CHANGELOG.md`: This file
+
+### New Files
+- `diagnose_data.py`: Diagnostic tool to examine data quality
+- `GAP_FIX_NOTES.md`: Detailed technical explanation of the fix
+
+---
+
+## Version 2.0 - Hourly Data Implementation (DEPRECATED - HAD VISUALIZATION ISSUE)
 
 ### Major Changes
 

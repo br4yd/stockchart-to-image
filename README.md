@@ -4,11 +4,12 @@ A professional Python tool for generating publication-quality stock price charts
 
 ## Features
 
-- Fetches real-time hourly stock data from Yahoo Finance using yfinance library
+- Fetches real-time intraday stock data from Yahoo Finance using yfinance library
 - Generates clean, minimalistic charts optimized for print media
 - Produces 300 DPI PNG files suitable for professional publication
-- Displays hourly price changes over the last 5 trading days
-- Shows intraday volatility with detailed time-based data points
+- Displays smooth 5-minute interval data over the last 5 trading days
+- Shows intraday volatility with detailed price movements
+- Intelligently handles market closure gaps (no diagonal lines across overnight periods)
 - Handles invalid tickers with alternative identifier prompts (ISIN/WKN)
 - Automatic timestamp-based file naming
 - Robust error handling and validation
@@ -70,11 +71,12 @@ print(f"Chart saved to: {filepath}")
 - **Resolution**: 300 DPI (print quality)
 - **Format**: PNG with white background
 - **Size**: 10x6 inches (3000x1800 pixels)
-- **Style**: Continuous line chart showing hourly data
+- **Style**: Smooth continuous line chart with segment breaks at market closures
 - **Color Scheme**: Professional grayscale (#2C3E50)
-- **Data Interval**: Hourly prices over 5 trading days
-- **Time Display**: Major ticks show dates, minor ticks show 6-hour intervals
-- **Elements**: Title with hourly notation, date/time axis, price axis, dual-level grid lines
+- **Data Interval**: 5-minute intervals over 5 trading days (~390 data points)
+- **Gap Handling**: Automatic detection of market closures, no lines drawn across gaps
+- **Time Display**: Date labels on x-axis, smooth intraday price movements
+- **Elements**: Clean title, date axis, price axis, grid lines for readability
 
 ## Error Handling
 
@@ -98,7 +100,7 @@ If fewer than 5 trading days are available (e.g., newly listed stocks), the tool
 ## Technical Details
 
 ### Data Source
-Yahoo Finance via yfinance library - Hourly interval data with 1h granularity
+Yahoo Finance via yfinance library - 5-minute interval data with gap detection
 
 ### Dependencies
 - `pandas` - Data manipulation and analysis
@@ -106,10 +108,11 @@ Yahoo Finance via yfinance library - Hourly interval data with 1h granularity
 - `yfinance` - Yahoo Finance data retrieval
 
 ### Performance
-- Average execution time: 2-4 seconds per chart
-- Memory efficient handling of hourly time-series data
-- Optimized vectorized operations
-- Fetches 10 days of data to ensure 5 complete trading days
+- Average execution time: 3-5 seconds per chart
+- Memory efficient handling of intraday time-series data
+- Optimized vectorized operations with segment-based plotting
+- Automatic gap detection prevents lines across market closures
+- Fetches last 5 trading days directly via period parameter
 
 ## File Structure
 

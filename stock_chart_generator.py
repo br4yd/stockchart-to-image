@@ -22,22 +22,20 @@ class StockChartGenerator:
 
     def fetch_stock_data(self, ticker: str, days: int = 5) -> Optional[pd.DataFrame]:
         """
-        Fetch hourly stock data from Yahoo Finance using yfinance library.
+        Fetch intraday stock data from Yahoo Finance using yfinance library.
+        Uses 5-minute intervals for smooth visualization of 5-day charts.
 
         Args:
             ticker: Stock ticker symbol
             days: Number of trading days to fetch (default 5)
 
         Returns:
-            DataFrame with hourly stock data or None if fetch fails
+            DataFrame with intraday stock data or None if fetch fails
         """
         try:
             stock = yf.Ticker(ticker)
 
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=10)
-
-            hist = stock.history(start=start_date, end=end_date, interval='1h')
+            hist = stock.history(period='5d', interval='5m')
 
             if hist.empty:
                 return None
@@ -56,13 +54,6 @@ class StockChartGenerator:
             if len(hist) == 0:
                 return None
 
-            unique_days = hist['date'].dt.date.nunique()
-            if unique_days < days:
-                return hist
-
-            cutoff_date = hist['date'].dt.date.unique()[-days]
-            hist = hist[hist['date'].dt.date >= cutoff_date]
-
             return hist
 
         except Exception as e:
@@ -70,10 +61,11 @@ class StockChartGenerator:
 
     def generate_chart(self, data: pd.DataFrame, ticker: str) -> plt.Figure:
         """
-        Generate a print-quality stock chart with hourly data.
+        Generate a print-quality stock chart with intraday data.
+        Handles gaps in data to avoid drawing lines across market closures.
 
         Args:
-            data: DataFrame containing hourly stock data
+            data: DataFrame containing intraday stock data
             ticker: Stock ticker symbol
 
         Returns:
@@ -81,31 +73,46 @@ class StockChartGenerator:
         """
         fig, ax = plt.subplots(figsize=(10, 6), dpi=300)
 
-        dates = data['date'].values
-        closes = data['close'].values
+        data = data.copy()
+        data['date_pd'] = pd.to_datetime(data['date'])
 
-        ax.plot(dates, closes, linewidth=1.5, color='#2C3E50',
-                marker='', linestyle='-', alpha=0.9)
+        time_diffs = data['date_pd'].diff()
+        gap_threshold = pd.Timedelta(hours=2)
 
-        ax.set_xlabel('Date & Time', fontsize=12, fontweight='bold')
+        segments = []
+        current_segment_dates = []
+        current_segment_closes = []
+
+        for idx, row in data.iterrows():
+            if idx > 0 and time_diffs.iloc[idx] > gap_threshold:
+                if current_segment_dates:
+                    segments.append((current_segment_dates, current_segment_closes))
+                current_segment_dates = [row['date_pd']]
+                current_segment_closes = [row['close']]
+            else:
+                current_segment_dates.append(row['date_pd'])
+                current_segment_closes.append(row['close'])
+
+        if current_segment_dates:
+            segments.append((current_segment_dates, current_segment_closes))
+
+        for seg_dates, seg_closes in segments:
+            ax.plot(seg_dates, seg_closes, linewidth=1.2, color='#2C3E50',
+                    linestyle='-', alpha=0.9)
+
+        ax.set_xlabel('Date', fontsize=12, fontweight='bold')
         ax.set_ylabel('Price (USD)', fontsize=12, fontweight='bold')
 
-        num_days = data['date'].dt.date.nunique()
-        ax.set_title(f'{ticker.upper()} - Last {num_days} Trading Days (Hourly)',
+        num_days = data['date_pd'].dt.date.nunique()
+        ax.set_title(f'{ticker.upper()} - Last {num_days} Trading Days',
                      fontsize=14, fontweight='bold', pad=20)
 
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
         ax.xaxis.set_major_locator(mdates.DayLocator())
 
-        ax.xaxis.set_minor_formatter(mdates.DateFormatter('%H:%M'))
-        ax.xaxis.set_minor_locator(mdates.HourLocator(interval=6))
+        fig.autofmt_xdate(rotation=0, ha='center')
 
-        ax.tick_params(axis='x', which='minor', labelsize=8, rotation=45)
-
-        fig.autofmt_xdate(rotation=45, ha='right')
-
-        ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5, which='major')
-        ax.grid(True, alpha=0.15, linestyle=':', linewidth=0.3, which='minor')
+        ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
         ax.set_axisbelow(True)
 
         ax.spines['top'].set_visible(False)
@@ -113,6 +120,7 @@ class StockChartGenerator:
         ax.spines['left'].set_linewidth(1.5)
         ax.spines['bottom'].set_linewidth(1.5)
 
+        closes = data['close'].values
         y_min, y_max = closes.min(), closes.max()
         y_range = y_max - y_min
         ax.set_ylim(y_min - y_range * 0.1, y_max + y_range * 0.1)
@@ -213,12 +221,12 @@ class StockChartGenerator:
                 raise ValueError(f"Unable to fetch data for the provided identifier")
 
         num_days = data['date'].dt.date.nunique()
-        num_hours = len(data)
+        num_points = len(data)
 
         if num_days < 5:
             print(f"Warning: Only {num_days} trading days available (requested 5)")
 
-        print(f"Generating chart with {num_hours} hourly data points across {num_days} trading days...")
+        print(f"Generating chart with {num_points} data points across {num_days} trading days...")
 
         fig = self.generate_chart(data, ticker)
         filepath = self.save_chart(fig, ticker)
