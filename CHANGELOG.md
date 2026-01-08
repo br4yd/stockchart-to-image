@@ -1,5 +1,60 @@
 # Changelog
 
+## Version 2.2 - Compressed X-Axis (NO WHITESPACE FIX)
+
+### Problem Fixed
+Version 2.1 correctly broke lines at market closures, but the x-axis still displayed empty whitespace during non-trading hours (overnight, weekends). This wasted chart space and looked unprofessional.
+
+### Solution
+Implemented compressed x-axis using numerical indices instead of datetime values. Charts now fill entire width with trading data.
+
+### Technical Changes
+
+#### X-Axis Compression
+- **Numerical indices**: Uses sequential indices (0, 1, 2, ...) instead of datetime values
+- **No empty space**: All data points plotted consecutively
+- **Custom labels**: Date labels positioned at center of each trading day
+- **Day boundaries**: Subtle vertical lines mark transitions between trading days
+
+#### Visual Improvements
+- **Day separator lines**: Dashed gray vertical lines between trading days
+- **Centered labels**: Date labels positioned at midpoint of each day's data
+- **Grid optimization**: Only horizontal grid lines (y-axis) to avoid clutter
+- **Full width usage**: Chart uses 100% of available width for data
+
+#### Code Implementation
+```python
+# Use numerical indices instead of dates
+data['x_index'] = range(len(data))
+ax.plot(x_indices, closes)
+
+# Custom labels at day centers
+ax.set_xticks(label_positions)
+ax.set_xticklabels(day_labels)
+
+# Vertical separators at day boundaries
+ax.axvline(x=row['x_index'], color='#CCCCCC', linestyle='--')
+```
+
+### Benefits
+1. Maximized data visibility - no wasted space
+2. Professional appearance matching financial websites
+3. Clear day separation with vertical markers
+4. Better use of limited newspaper column space
+5. No confusion about missing data
+
+### Files Modified
+- `stock_chart_generator.py`: Completely rewrote x-axis handling in generate_chart()
+
+### New Documentation
+- `COMPRESSED_AXIS_FIX.md`: Detailed explanation of implementation
+
+### Visual Result
+**Before**: `[Data]___empty___[Data]___empty___[Data]`
+**After**: `[Data]|[Data]|[Data]` (| = day boundary marker)
+
+---
+
 ## Version 2.1 - Gap Fix and 5-Minute Intervals (CRITICAL FIX)
 
 ### Problem Fixed

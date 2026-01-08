@@ -9,7 +9,9 @@ A professional Python tool for generating publication-quality stock price charts
 - Produces 300 DPI PNG files suitable for professional publication
 - Displays smooth 5-minute interval data over the last 5 trading days
 - Shows intraday volatility with detailed price movements
-- Intelligently handles market closure gaps (no diagonal lines across overnight periods)
+- Compressed x-axis eliminates empty whitespace during market closures
+- Visual day boundaries with subtle vertical separator lines
+- Intelligently handles market closure gaps (no diagonal lines, no empty space)
 - Handles invalid tickers with alternative identifier prompts (ISIN/WKN)
 - Automatic timestamp-based file naming
 - Robust error handling and validation
@@ -74,9 +76,11 @@ print(f"Chart saved to: {filepath}")
 - **Style**: Smooth continuous line chart with segment breaks at market closures
 - **Color Scheme**: Professional grayscale (#2C3E50)
 - **Data Interval**: 5-minute intervals over 5 trading days (~390 data points)
-- **Gap Handling**: Automatic detection of market closures, no lines drawn across gaps
-- **Time Display**: Date labels on x-axis, smooth intraday price movements
-- **Elements**: Clean title, date axis, price axis, grid lines for readability
+- **X-Axis**: Compressed numerical axis (no whitespace during market closures)
+- **Gap Handling**: Automatic detection of market closures, no lines or empty space
+- **Day Boundaries**: Subtle vertical dashed lines separating trading days
+- **Time Display**: Date labels centered on each trading day
+- **Elements**: Clean title, compressed date axis, price axis, horizontal grid lines
 
 ## Error Handling
 

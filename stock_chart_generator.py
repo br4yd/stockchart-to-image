@@ -61,8 +61,8 @@ class StockChartGenerator:
 
     def generate_chart(self, data: pd.DataFrame, ticker: str) -> plt.Figure:
         """
-        Generate a print-quality stock chart with intraday data.
-        Handles gaps in data to avoid drawing lines across market closures.
+        Generate a print-quality stock chart with compressed x-axis.
+        Uses numerical indices to eliminate empty space during market closures.
 
         Args:
             data: DataFrame containing intraday stock data
@@ -75,30 +75,56 @@ class StockChartGenerator:
 
         data = data.copy()
         data['date_pd'] = pd.to_datetime(data['date'])
+        data['x_index'] = range(len(data))
 
         time_diffs = data['date_pd'].diff()
         gap_threshold = pd.Timedelta(hours=2)
 
-        segments = []
-        current_segment_dates = []
+        segment_indices = []
+        current_segment_x = []
         current_segment_closes = []
 
         for idx, row in data.iterrows():
             if idx > 0 and time_diffs.iloc[idx] > gap_threshold:
-                if current_segment_dates:
-                    segments.append((current_segment_dates, current_segment_closes))
-                current_segment_dates = [row['date_pd']]
+                if current_segment_x:
+                    segment_indices.append((current_segment_x, current_segment_closes))
+                current_segment_x = [row['x_index']]
                 current_segment_closes = [row['close']]
             else:
-                current_segment_dates.append(row['date_pd'])
+                current_segment_x.append(row['x_index'])
                 current_segment_closes.append(row['close'])
 
-        if current_segment_dates:
-            segments.append((current_segment_dates, current_segment_closes))
+        if current_segment_x:
+            segment_indices.append((current_segment_x, current_segment_closes))
 
-        for seg_dates, seg_closes in segments:
-            ax.plot(seg_dates, seg_closes, linewidth=1.2, color='#2C3E50',
+        for seg_x, seg_closes in segment_indices:
+            ax.plot(seg_x, seg_closes, linewidth=1.2, color='#2C3E50',
                     linestyle='-', alpha=0.9)
+
+        day_boundaries = []
+        day_labels = []
+        current_date = None
+
+        for idx, row in data.iterrows():
+            row_date = row['date_pd'].date()
+            if row_date != current_date:
+                if current_date is not None:
+                    ax.axvline(x=row['x_index'], color='#CCCCCC', linestyle='--',
+                              linewidth=0.8, alpha=0.5, zorder=1)
+                day_boundaries.append(row['x_index'])
+                day_labels.append(row['date_pd'].strftime('%b %d'))
+                current_date = row_date
+
+        label_positions = []
+        for i in range(len(day_boundaries)):
+            if i < len(day_boundaries) - 1:
+                mid_point = (day_boundaries[i] + day_boundaries[i + 1]) / 2
+            else:
+                mid_point = (day_boundaries[i] + len(data) - 1) / 2
+            label_positions.append(mid_point)
+
+        ax.set_xticks(label_positions)
+        ax.set_xticklabels(day_labels)
 
         ax.set_xlabel('Date', fontsize=12, fontweight='bold')
         ax.set_ylabel('Price (USD)', fontsize=12, fontweight='bold')
@@ -107,12 +133,7 @@ class StockChartGenerator:
         ax.set_title(f'{ticker.upper()} - Last {num_days} Trading Days',
                      fontsize=14, fontweight='bold', pad=20)
 
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
-        ax.xaxis.set_major_locator(mdates.DayLocator())
-
-        fig.autofmt_xdate(rotation=0, ha='center')
-
-        ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
+        ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5, axis='y')
         ax.set_axisbelow(True)
 
         ax.spines['top'].set_visible(False)
@@ -124,6 +145,8 @@ class StockChartGenerator:
         y_min, y_max = closes.min(), closes.max()
         y_range = y_max - y_min
         ax.set_ylim(y_min - y_range * 0.1, y_max + y_range * 0.1)
+
+        ax.set_xlim(-1, len(data))
 
         ax.tick_params(axis='both', which='major', labelsize=10)
 
