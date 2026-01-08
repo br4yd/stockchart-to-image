@@ -73,7 +73,17 @@ class StockChartGenerator:
         Returns:
             Matplotlib figure object
         """
-        fig, ax = plt.subplots(figsize=(10, 6), dpi=300)
+        # Exact dimensions: 105.6mm x 44.45mm at 300 DPI = 1247px x 525px
+        width_mm = 105.6
+        height_mm = 44.45
+        width_inch = width_mm / 25.4
+        height_inch = height_mm / 25.4
+
+        fig, ax = plt.subplots(figsize=(width_inch, height_inch), dpi=300)
+
+        # Transparent background
+        fig.patch.set_alpha(0.0)
+        ax.patch.set_alpha(0.0)
 
         data = data.copy()
         data['date_pd'] = pd.to_datetime(data['date'])
@@ -88,19 +98,15 @@ class StockChartGenerator:
             x_smooth = np.linspace(x_indices[0], x_indices[-1], len(x_indices) * 5)
             y_smooth = cs(x_smooth)
 
-            ax.plot(x_smooth, y_smooth, linewidth=1.5, color='#2C3E50',
+            # Thick red price line
+            ax.plot(x_smooth, y_smooth, linewidth=2.5, color='#FF0000',
                     linestyle='-', solid_capstyle='round', solid_joinstyle='round',
                     zorder=3)
-
-            ax.fill_between(x_smooth, y_smooth, y_min_global,
-                           alpha=0.15, color='#2C3E50', zorder=2)
         else:
-            ax.plot(x_indices, closes, linewidth=1.5, color='#2C3E50',
+            # Thick red price line
+            ax.plot(x_indices, closes, linewidth=2.5, color='#FF0000',
                     linestyle='-', solid_capstyle='round', solid_joinstyle='round',
                     zorder=3)
-
-            ax.fill_between(x_indices, closes, y_min_global,
-                           alpha=0.15, color='#2C3E50', zorder=2)
 
         day_boundaries = []
         day_labels = []
@@ -110,7 +116,8 @@ class StockChartGenerator:
             row_date = row['date_pd'].date()
             if row_date != current_date:
                 day_boundaries.append(row['x_index'])
-                day_labels.append(row['date_pd'].strftime('%b %d'))
+                # Format as "30 Jan" (day first, then month)
+                day_labels.append(row['date_pd'].strftime('%d %b'))
                 current_date = row_date
 
         label_positions = []
@@ -122,17 +129,24 @@ class StockChartGenerator:
             label_positions.append(mid_point)
 
         ax.set_xticks(label_positions)
-        ax.set_xticklabels(day_labels)
+        # Bold x-axis labels
+        ax.set_xticklabels(day_labels, fontweight='bold', fontsize=9)
 
-        ax.set_xlabel('Date', fontsize=12, fontweight='bold')
-        ax.set_ylabel('Price (USD)', fontsize=12, fontweight='bold')
+        # Remove axis labels
+        ax.set_xlabel('')
+        ax.set_ylabel('')
 
-        num_days = data['date_pd'].dt.date.nunique()
-        ax.set_title(f'{ticker.upper()} - Last {num_days} Trading Days',
-                     fontsize=14, fontweight='bold', pad=20)
-
-        ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5, axis='y')
+        # Thin light-blue vertical gridlines
+        ax.grid(True, alpha=0.4, linestyle='-', linewidth=0.5, axis='x', color='#ADD8E6')
         ax.set_axisbelow(True)
+
+        # Dark blue header bar with company name
+        fig.text(0.5, 0.95, ticker.upper(),
+                ha='center', va='top',
+                fontsize=12, fontweight='bold',
+                color='white',
+                bbox=dict(facecolor='#00008B', edgecolor='none',
+                         boxstyle='round,pad=0.3', alpha=1.0))
 
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
@@ -168,7 +182,7 @@ class StockChartGenerator:
         filepath = self.output_dir / filename
 
         figure.savefig(filepath, dpi=300, bbox_inches='tight',
-                      facecolor='white', edgecolor='none')
+                      facecolor='none', edgecolor='none', transparent=True)
         plt.close(figure)
 
         return str(filepath)
