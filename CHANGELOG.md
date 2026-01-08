@@ -1,5 +1,63 @@
 # Changelog
 
+## Version 2.5 - Continuous Line (ONE UNBROKEN LINE)
+
+### Major Change
+User requested ONE continuous line running from left to right without any disconnections, even between non-trading days. Removed segmentation logic to create a single smooth interpolated curve across all data.
+
+### Implementation Changes
+
+#### Removed Segmentation
+- **Before**: Plotted separate line segments for each trading day
+- **After**: Single continuous line across all 5 days
+- **Result**: No visual disconnections or breaks
+
+#### Code Simplification
+```python
+# Use ALL data as one continuous dataset
+x_indices = data['x_index'].values
+closes = data['close'].values
+
+# Single cubic spline across ALL points
+cs = interpolate.CubicSpline(x_indices, closes, bc_type='natural')
+x_smooth = np.linspace(x_indices[0], x_indices[-1], len(x_indices) * 5)
+y_smooth = cs(x_smooth)
+
+# Plot as ONE continuous line
+ax.plot(x_smooth, y_smooth, linewidth=1.5, color='#2C3E50', zorder=3)
+ax.fill_between(x_smooth, y_smooth, y_min_global, alpha=0.15, color='#2C3E50', zorder=2)
+```
+
+#### Removed Day Boundary Lines
+- No vertical dashed lines between days
+- Day labels remain for reference
+- Clean continuous visual flow
+
+### Benefits
+1. One seamless line from left to right
+2. Smooth interpolated transitions across non-trading periods
+3. No visual disconnections or gaps
+4. Simpler, more maintainable code
+5. Professional modern appearance
+6. Matches user expectation exactly
+
+### Visual Result
+**Before**: Disconnected segments with gaps between days
+**After**: One continuous flowing line across entire chart
+
+### Performance
+- Execution time: Unchanged (3-5s)
+- Code complexity: Reduced significantly
+- Lines of code: Reduced from ~100 to ~40
+
+### Files Modified
+- `stock_chart_generator.py`: Removed segmentation, single continuous interpolation
+
+### New Documentation
+- `CONTINUOUS_LINE_IMPLEMENTATION.md`: Complete explanation
+
+---
+
 ## Version 2.4 - Smooth Curve Interpolation (FLOWING LINES)
 
 ### Enhancement Added

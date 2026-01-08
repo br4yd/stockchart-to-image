@@ -8,11 +8,11 @@ A professional Python tool for generating publication-quality stock price charts
 - Generates clean, minimalistic charts optimized for print media
 - Produces 300 DPI PNG files suitable for professional publication
 - Displays smooth 5-minute interval data over the last 5 trading days
-- Smooth flowing curves using cubic spline interpolation (no angular lines)
+- ONE continuous line with cubic spline interpolation across all days
+- Smooth interpolated transitions across non-trading periods (weekends, holidays)
 - Shows intraday volatility with detailed price movements
 - Compressed x-axis eliminates empty whitespace during market closures
-- Visual day boundaries with subtle vertical separator lines
-- Intelligently handles market closure gaps (no diagonal lines, no empty space)
+- No visual disconnections or breaks in the line
 - Filled area charts with professional styling
 - Handles invalid tickers with alternative identifier prompts (ISIN/WKN)
 - Automatic timestamp-based file naming

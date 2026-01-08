@@ -79,50 +79,28 @@ class StockChartGenerator:
         data['date_pd'] = pd.to_datetime(data['date'])
         data['x_index'] = range(len(data))
 
-        time_diffs = data['date_pd'].diff()
-        gap_threshold = pd.Timedelta(hours=2)
+        x_indices = data['x_index'].values
+        closes = data['close'].values
+        y_min_global = closes.min()
 
-        segment_indices = []
-        current_segment_x = []
-        current_segment_closes = []
+        if len(x_indices) >= 4:
+            cs = interpolate.CubicSpline(x_indices, closes, bc_type='natural')
+            x_smooth = np.linspace(x_indices[0], x_indices[-1], len(x_indices) * 5)
+            y_smooth = cs(x_smooth)
 
-        for idx, row in data.iterrows():
-            if idx > 0 and time_diffs.iloc[idx] > gap_threshold:
-                if current_segment_x:
-                    segment_indices.append((current_segment_x, current_segment_closes))
-                current_segment_x = [row['x_index']]
-                current_segment_closes = [row['close']]
-            else:
-                current_segment_x.append(row['x_index'])
-                current_segment_closes.append(row['close'])
+            ax.plot(x_smooth, y_smooth, linewidth=1.5, color='#2C3E50',
+                    linestyle='-', solid_capstyle='round', solid_joinstyle='round',
+                    zorder=3)
 
-        if current_segment_x:
-            segment_indices.append((current_segment_x, current_segment_closes))
+            ax.fill_between(x_smooth, y_smooth, y_min_global,
+                           alpha=0.15, color='#2C3E50', zorder=2)
+        else:
+            ax.plot(x_indices, closes, linewidth=1.5, color='#2C3E50',
+                    linestyle='-', solid_capstyle='round', solid_joinstyle='round',
+                    zorder=3)
 
-        y_min_global = data['close'].min()
-
-        for seg_x, seg_closes in segment_indices:
-            if len(seg_x) < 4:
-                ax.plot(seg_x, seg_closes, linewidth=1.5, color='#2C3E50',
-                        linestyle='-', solid_capstyle='round', solid_joinstyle='round',
-                        zorder=3)
-                ax.fill_between(seg_x, seg_closes, y_min_global,
-                               alpha=0.15, color='#2C3E50', zorder=2)
-            else:
-                seg_x_array = np.array(seg_x)
-                seg_closes_array = np.array(seg_closes)
-
-                cs = interpolate.CubicSpline(seg_x_array, seg_closes_array, bc_type='natural')
-
-                x_smooth = np.linspace(seg_x_array[0], seg_x_array[-1], len(seg_x) * 5)
-                y_smooth = cs(x_smooth)
-
-                ax.plot(x_smooth, y_smooth, linewidth=1.5, color='#2C3E50',
-                        linestyle='-', solid_capstyle='round', solid_joinstyle='round',
-                        zorder=3)
-
-                ax.fill_between(x_smooth, y_smooth, y_min_global,
-                               alpha=0.15, color='#2C3E50', zorder=2)
+            ax.fill_between(x_indices, closes, y_min_global,
+                           alpha=0.15, color='#2C3E50', zorder=2)
 
         day_boundaries = []
         day_labels = []
@@ -131,9 +109,6 @@ class StockChartGenerator:
         for idx, row in data.iterrows():
             row_date = row['date_pd'].date()
             if row_date != current_date:
-                if current_date is not None:
-                    ax.axvline(x=row['x_index'], color='#CCCCCC', linestyle='--',
-                              linewidth=0.8, alpha=0.5, zorder=1)
                 day_boundaries.append(row['x_index'])
                 day_labels.append(row['date_pd'].strftime('%b %d'))
                 current_date = row_date
