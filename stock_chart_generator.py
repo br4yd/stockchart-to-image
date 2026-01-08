@@ -98,13 +98,13 @@ class StockChartGenerator:
             x_smooth = np.linspace(x_indices[0], x_indices[-1], len(x_indices) * 5)
             y_smooth = cs(x_smooth)
 
-            # Thick red price line
-            ax.plot(x_smooth, y_smooth, linewidth=2.5, color='#FF0000',
+            # Red price line (slightly thinner)
+            ax.plot(x_smooth, y_smooth, linewidth=2.0, color='#FF0000',
                     linestyle='-', solid_capstyle='round', solid_joinstyle='round',
                     zorder=3)
         else:
-            # Thick red price line
-            ax.plot(x_indices, closes, linewidth=2.5, color='#FF0000',
+            # Red price line (slightly thinner)
+            ax.plot(x_indices, closes, linewidth=2.0, color='#FF0000',
                     linestyle='-', solid_capstyle='round', solid_joinstyle='round',
                     zorder=3)
 
@@ -140,13 +140,25 @@ class StockChartGenerator:
         ax.grid(True, alpha=0.4, linestyle='-', linewidth=0.5, axis='x', color='#ADD8E6')
         ax.set_axisbelow(True)
 
-        # Dark blue header bar with company name
-        fig.text(0.5, 0.95, ticker.upper(),
-                ha='center', va='top',
-                fontsize=12, fontweight='bold',
+        # Full-width dark blue header bar with company name
+        from matplotlib.patches import Rectangle
+
+        # Add header bar as a Rectangle that spans full figure width
+        header_height = 0.08  # 8% of figure height
+        header_rect = Rectangle((0, 1 - header_height), 1, header_height,
+                               transform=fig.transFigure,
+                               facecolor='#00008B',
+                               edgecolor='none',
+                               zorder=10)
+        fig.patches.append(header_rect)
+
+        # Add company name text centered on header bar
+        fig.text(0.5, 1 - header_height / 2, ticker.upper(),
+                ha='center', va='center',
+                fontsize=11, fontweight='bold',
                 color='white',
-                bbox=dict(facecolor='#00008B', edgecolor='none',
-                         boxstyle='round,pad=0.3', alpha=1.0))
+                transform=fig.transFigure,
+                zorder=11)
 
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
@@ -162,7 +174,8 @@ class StockChartGenerator:
 
         ax.tick_params(axis='both', which='major', labelsize=10)
 
-        plt.tight_layout()
+        # Adjust layout to leave space for header bar at top
+        plt.subplots_adjust(top=0.90, bottom=0.12, left=0.08, right=0.98)
 
         return fig
 
